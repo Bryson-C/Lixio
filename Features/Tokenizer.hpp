@@ -7,6 +7,9 @@
 
 #include <map>
 #include <string>
+#include <iostream>
+
+#include "Util.hpp"
 
 enum class TokenType {
     None,
@@ -14,6 +17,11 @@ enum class TokenType {
     Equals,
     Integer,
     Semicolon,
+};
+enum class TokenPosition {
+    Current,
+    Previous,
+    Next,
 };
 
 inline std::string tokenTypeToString(TokenType type) {
@@ -29,25 +37,26 @@ inline std::string tokenTypeToString(TokenType type) {
 class Token {
 private:
 public:
+    Token(TokenType type, std::string str = "") : token(type), data(str) {}
     std::string data;
     TokenType token;
+
+
+    void print() const {
+        std::cout << data << "\t|  " << tokenTypeToString(token) << "\n";
+    }
 };
 
 class Tokenizer {
 private:
-    std::map<std::string, TokenType> _tokenTable;
+    std::map<std::string, Duo<TokenPosition, TokenType>> _tokenTable;
     friend class Parser;
     friend class Token;
 public:
-    Tokenizer(const std::map<std::string, TokenType>& tokenTable) {
+    explicit Tokenizer(const std::map<std::string, Duo<TokenPosition,TokenType>>& tokenTable) {
         _tokenTable = tokenTable;
     }
-    inline Token parseNextFromCurrent(TokenType current, int& iteration) {
-        iteration++;
-    }
-    inline void parseCurrent(TokenType current, int& iteration) {
-        iteration++;
-    }
+    Token parseCurrent(std::string str);
 };
 
 

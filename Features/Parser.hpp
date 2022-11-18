@@ -9,10 +9,12 @@
 #include <string>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <ctype.h>
 
 
 #include "Tokenizer.hpp"
+
 
 class Parser {
 private:
@@ -24,10 +26,14 @@ private:
         Space,
     };
 
+
     std::vector<std::string> _wordBuffer;
+    //std::vector<> _rules;
+    std::vector<Token> _tokens;
+    friend int main();
 public:
     Parser(const std::string& string, Tokenizer tokenizer);
-    inline explicit Parser(const std::filesystem::path& path, Tokenizer tokenizer) {
+    inline explicit Parser(const std::filesystem::path& path, Tokenizer& tokenizer) {
         std::ifstream file(path);
         std::string buffer, result;
         while (std::getline(file, buffer)) {

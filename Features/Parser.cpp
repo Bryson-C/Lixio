@@ -34,11 +34,21 @@ Parser::Parser(const std::string &string, Tokenizer tokenizer) {
 
     _wordBuffer = split;
 
-    for (const auto& i : split) {
-        std::cout << i << "\n";
-    }
-
-    for (auto & i : _wordBuffer) {
-        std::cout << tokenTypeToString(tokenizer._tokenTable[i]) << '\n';
+    int iteration = 0;
+    while (iteration < split.size()) {
+        Token token = tokenizer.parseCurrent(split[iteration]);
+        switch (tokenizer._tokenTable[split[iteration]].one) {
+            case TokenPosition::Current:
+                _tokens.push_back(token);
+                break;
+            case TokenPosition::Next:
+                _tokens.emplace_back(TokenType::None);
+                _tokens.push_back(token);
+                break;
+            case TokenPosition::Previous:
+                _tokens[_tokens.size()-1] = token;
+                break;
+        }
+        iteration++;
     }
 }
