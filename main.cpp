@@ -1,22 +1,17 @@
 #include <iostream>
 #include <map>
 
-#include "Features/Parser.hpp"
+#include "Features/Module/Module.hpp"
 
 int main() {
 
-    std::map<std::string, Duo<TokenPosition, TokenType>> tokens = {
-            {"=", Duo(TokenPosition::Current, TokenType::Equals)},
-            {";", Duo(TokenPosition::Current, TokenType::Semicolon)},
-            {"$", Duo(TokenPosition::Next, TokenType::Named)},
-    };
+    std::map<std::string, TokenType> TokenTable = GetTokenTable();
+    Tokenizer tokenizer(TokenTable);
 
-    Tokenizer tokenizer(tokens);
-    Parser parser(std::filesystem::path(R"(D:\CompilerFeatures\Language\default.lang)"), tokenizer);
+    std::filesystem::path file(R"(D:\CompilerFeatures\Language\default.lang)");
+    Module mod(file, tokenizer);
 
-    for (const auto& i : parser._tokens) {
-        i.print();
-    }
-    
+
+
     return 0;
 }
