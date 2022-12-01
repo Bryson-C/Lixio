@@ -16,9 +16,12 @@
 class Token {
 private:
     TokenType _type;
+    friend class Module;
 public:
     Token() = default;
     Token(TokenType type) : _type(type) {}
+
+    inline std::string asString() const { return tokenToString(_type); }
 };
 
 class Tokenizer {

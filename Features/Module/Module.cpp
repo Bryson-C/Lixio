@@ -53,18 +53,56 @@ static std::string fileToString(const std::filesystem::path& path) {
     return result;
 }
 
+void Module::contextPass(const std::vector<ParsePassRule> &rules) {
+    for (int i = 1; i < _tokens.size(); i++) {
+        int ruleIter = 0;
+        for (bool leave = false; auto& rule : rules) {
+            for (auto& token : rule.one) {
+                if (_tokens[i-1]._type == token && _tokens[i]._type == TokenType::None) {
+                    _tokens[i] = rule.two;
+                    leave = true;
+                    break;
+                }
+            }
+            if (leave) break;
+            else {
+                if (ruleIter >= rule.one.size()-1 && !leave)
+                    #ifdef WARN_IF_UNHANDLED
+                        std::cerr << "Unhandled Case: (TokenCode) " << _tokens[i].asString() << "\n";
+                    #else
+                        ;
+                    #endif
+            }
+            ruleIter++;
+        }
+    }
+}
+
 Module::Module(const std::string &string, Tokenizer& tokenizer) {
     _code = splitString(string);
+    for (const auto& str : _code) {
+        if (!tokenizer._dictionary.contains(str)) {
+            if (auto isNum = Parser::isDigit(str); isNum)
+                _tokens.emplace_back(TokenType::Integer);
+            else
+                _tokens.emplace_back(TokenType::None);
+        } else {
+            _tokens.emplace_back(tokenizer._dictionary[str]);
+        }
+    }
+    contextPass(_rules);
 }
 Module::Module(const std::filesystem::path &path, Tokenizer& tokenizer) {
     _code = splitString(fileToString(path.string()));
     for (const auto& str : _code) {
         if (!tokenizer._dictionary.contains(str)) {
-            #ifdef WARN_IF_UNHANDLED
-                std::cerr << "Unhandled Case: (TokenCode) " << str << "\n";
-            #endif
+            if (auto isNum = Parser::isDigit(str); isNum)
+                _tokens.emplace_back(TokenType::Integer);
+            else
+                _tokens.emplace_back(TokenType::None);
         } else {
-            _tokens.push_back(Token(tokenizer._dictionary[str]));
+            _tokens.emplace_back(tokenizer._dictionary[str]);
         }
     }
+    contextPass(_rules);
 }

@@ -18,6 +18,18 @@ enum class TokenType {
     Semicolon,
 };
 
+inline std::string tokenToString(const TokenType type) {
+    switch (type) {
+        case TokenType::None: return "None";
+        case TokenType::IntegerType: return "Integer_Type";
+        case TokenType::Integer: return "Integer";
+        case TokenType::StringType: return "String_Type";
+        case TokenType::String: return "String";
+        case TokenType::Named: return "Named";
+        case TokenType::Equals: return "Equals";
+        case TokenType::Semicolon: return "Semicolon";
+    }
+}
 
 
 inline std::map<std::string, TokenType> GetTokenTable() {

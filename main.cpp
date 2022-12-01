@@ -10,6 +10,7 @@ int main() {
 
     std::filesystem::path file(R"(D:\CompilerFeatures\Language\default.lang)");
     Module mod(file, tokenizer);
+    mod.print();
 
 
 
