@@ -16,12 +16,13 @@
 class Token {
 private:
     TokenType _type;
+    std::string _str;
     friend class Module;
 public:
     Token() = default;
-    Token(TokenType type) : _type(type) {}
+    Token(TokenType type, std::string str = "") : _type(type), _str(str) {}
 
-    inline std::string asString() const { return tokenToString(_type); }
+    inline std::string asString() const { return ((!_str.empty()) ? "\"" + _str + "\" " : "") + tokenToString(_type); }
 };
 
 class Tokenizer {

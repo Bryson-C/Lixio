@@ -9,7 +9,26 @@ static std::vector<std::string> splitString(const std::string& string) {
     std::vector<std::string> split;
 
     std::string buffer;
+    bool isString = false;
+    char strType;
     for (Parser::CharType currentType, lastType = Parser::CharType::None; const auto& chr : string) {
+
+        if (isString) {
+            buffer += chr;
+            if (chr == strType) {
+                split.push_back(buffer);
+                buffer.clear();
+                isString = false;
+            }
+            continue;
+        }
+        if (chr == '\'' || chr == '\"') {
+            split.push_back(buffer);
+            buffer.clear();
+            isString = true;
+            buffer += strType = chr;
+            continue;
+        }
 
         if (std::isdigit(chr))
         {
@@ -80,28 +99,35 @@ void Module::contextPass(const std::vector<ParsePassRule> &rules) {
 
 Module::Module(const std::string &string, Tokenizer& tokenizer) {
     _code = splitString(string);
-    for (const auto& str : _code) {
-        if (!tokenizer._dictionary.contains(str)) {
-            if (auto isNum = Parser::isDigit(str); isNum)
-                _tokens.emplace_back(TokenType::Integer);
+    for (int i = 0; i < _code.size(); i++) {
+        if (!tokenizer._dictionary.contains(_code[i])) {
+            if (auto isNum = Parser::isDigit(_code[i]); isNum)
+                _tokens.emplace_back(TokenType::Integer, _code[i]);
+            else if (auto isString = Parser::isString(_code[i]); isString.one)
+                _tokens.emplace_back(TokenType::String, isString.two);
             else
-                _tokens.emplace_back(TokenType::None);
+                _tokens.emplace_back(TokenType::None, _code[i]);
         } else {
-            _tokens.emplace_back(tokenizer._dictionary[str]);
+            _tokens.emplace_back(tokenizer._dictionary[_code[i]], _code[i]);
         }
     }
     contextPass(_rules);
 }
+
+
+
 Module::Module(const std::filesystem::path &path, Tokenizer& tokenizer) {
     _code = splitString(fileToString(path.string()));
-    for (const auto& str : _code) {
-        if (!tokenizer._dictionary.contains(str)) {
-            if (auto isNum = Parser::isDigit(str); isNum)
-                _tokens.emplace_back(TokenType::Integer);
+    for (int i = 0; i < _code.size(); i++) {
+        if (!tokenizer._dictionary.contains(_code[i])) {
+            if (auto isNum = Parser::isDigit(_code[i]); isNum)
+                _tokens.emplace_back(TokenType::Integer, _code[i]);
+            else if (auto isString = Parser::isString(_code[i]); isString.one)
+                _tokens.emplace_back(TokenType::String, isString.two);
             else
-                _tokens.emplace_back(TokenType::None);
+                _tokens.emplace_back(TokenType::None, _code[i]);
         } else {
-            _tokens.emplace_back(tokenizer._dictionary[str]);
+            _tokens.emplace_back(tokenizer._dictionary[_code[i]], _code[i]);
         }
     }
     contextPass(_rules);

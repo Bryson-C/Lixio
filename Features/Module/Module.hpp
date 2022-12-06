@@ -59,6 +59,18 @@ namespace Parser {
             if (!isdigit(chr)) return false;
         return true;
     }
+    inline Duo<bool, std::string> isString(std::string str) {
+        if (char stringType = str[0]; str[0] == '\"' || str[0] == '\'') {
+            std::string buffer;
+            int i = 1;
+            while (str[i] != stringType) {
+                buffer += str[i];
+                i++;
+            }
+            return {true, buffer};
+        }
+        return {false, ""};
+    }
 };
 
 
