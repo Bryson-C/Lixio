@@ -16,6 +16,8 @@ enum class TokenType {
     Named,          // Cannot Be Directly Used
     Equals,
     Semicolon,
+    OpenBlock,
+    CloseBlock,
 };
 
 inline std::string tokenToString(const TokenType type) {
@@ -28,6 +30,9 @@ inline std::string tokenToString(const TokenType type) {
         case TokenType::Named: return "Named";
         case TokenType::Equals: return "Equals";
         case TokenType::Semicolon: return "Semicolon";
+        case TokenType::OpenBlock: return "Open_Block";
+        case TokenType::CloseBlock: return "Close_Block";
+        default: return "UNHANDLED CASE!";
     }
 }
 
@@ -38,6 +43,8 @@ inline std::map<std::string, TokenType> GetTokenTable() {
             {"String", TokenType::StringType},
             {"=", TokenType::Equals},
             {";", TokenType::Semicolon},
+            {"{", TokenType::OpenBlock},
+            {"}", TokenType::CloseBlock},
     };
     return TokenTable;
 };

@@ -2,3 +2,5 @@
 Int x = 10;
 
 String xx = "Hello World";
+
+{ 10 20 };

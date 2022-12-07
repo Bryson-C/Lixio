@@ -17,12 +17,25 @@ class Token {
 private:
     TokenType _type;
     std::string _str;
+
+    Token* _parent;
+    std::vector<Token> _children;
+
     friend class Module;
 public:
     Token() = default;
-    Token(TokenType type, std::string str = "") : _type(type), _str(str) {}
+    Token(TokenType type, std::string str = "") : _type(type), _str(str), _parent(nullptr) {}
 
-    inline std::string asString() const { return ((!_str.empty()) ? "\"" + _str + "\" " : "") + tokenToString(_type); }
+    inline std::string asString() const { return ((!_str.empty()) ? "\'" + _str + "\'" : "") + "  --  [" + tokenToString(_type) + "]"; }
+    inline void print() const {
+        std::cout << asString() << "\n";
+        for (auto& i : _children) {
+            std::cout << "\t" << i.asString() << "\n";
+            for (auto& j : i._children) {
+                std::cout << "\t\t" << j.asString() << "\n";
+            }
+        }
+    }
 };
 
 class Tokenizer {

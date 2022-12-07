@@ -6,9 +6,8 @@
 
 
 static std::vector<std::string> splitString(const std::string& string) {
-    std::vector<std::string> split;
+    Parser::PushBuffer buffer;
 
-    std::string buffer;
     bool isString = false;
     char strType;
     for (Parser::CharType currentType, lastType = Parser::CharType::None; const auto& chr : string) {
@@ -16,15 +15,13 @@ static std::vector<std::string> splitString(const std::string& string) {
         if (isString) {
             buffer += chr;
             if (chr == strType) {
-                split.push_back(buffer);
-                buffer.clear();
+                buffer.push();
                 isString = false;
             }
             continue;
         }
         if (chr == '\'' || chr == '\"') {
-            split.push_back(buffer);
-            buffer.clear();
+            buffer.push();
             isString = true;
             buffer += strType = chr;
             continue;
@@ -47,20 +44,22 @@ static std::vector<std::string> splitString(const std::string& string) {
             currentType = Parser::CharType::Symbol;
         }
 
-
-        if (currentType != lastType && lastType != Parser::CharType::None && !buffer.empty()) {
-            split.push_back(buffer);
-            buffer.clear();
+        if (currentType == Parser::CharType::Symbol) {
+            buffer.push();
+            buffer.push(chr);
+            continue;
+        }
+        if (currentType != lastType && lastType != Parser::CharType::None) {
+            buffer.push();
         }
         if (currentType != Parser::CharType::Space)
             buffer += chr;
 
         lastType = currentType;
     }
-    if (!buffer.empty())
-        split.push_back(buffer);
+    buffer.push();
 
-    return split;
+    return buffer.vec;
 }
 static std::string fileToString(const std::filesystem::path& path) {
     std::ifstream file(path);
@@ -78,7 +77,7 @@ void Module::contextPass(const std::vector<ParsePassRule> &rules) {
         for (bool leave = false; auto& rule : rules) {
             for (auto& token : rule.one) {
                 if (_tokens[i-1]._type == token && _tokens[i]._type == TokenType::None) {
-                    _tokens[i] = rule.two;
+                    _tokens[i]._type = rule.two;
                     leave = true;
                     break;
                 }
@@ -88,8 +87,6 @@ void Module::contextPass(const std::vector<ParsePassRule> &rules) {
                 if (ruleIter >= rule.one.size()-1 && !leave)
                     #ifdef WARN_IF_UNHANDLED
                         std::cerr << "Unhandled Case: (TokenCode) " << _tokens[i].asString() << "\n";
-                    #else
-                        ;
                     #endif
             }
             ruleIter++;
@@ -97,38 +94,41 @@ void Module::contextPass(const std::vector<ParsePassRule> &rules) {
     }
 }
 
-Module::Module(const std::string &string, Tokenizer& tokenizer) {
-    _code = splitString(string);
+Module::Module(const std::vector<std::string> &string, Tokenizer &tokenizer) {
+    _code = string;
+    Token* parent = nullptr;
     for (int i = 0; i < _code.size(); i++) {
         if (!tokenizer._dictionary.contains(_code[i])) {
             if (auto isNum = Parser::isDigit(_code[i]); isNum)
-                _tokens.emplace_back(TokenType::Integer, _code[i]);
+            {
+                ((parent == nullptr) ?  _tokens : parent->_children).emplace_back(TokenType::Integer, _code[i]);
+            }
             else if (auto isString = Parser::isString(_code[i]); isString.one)
-                _tokens.emplace_back(TokenType::String, isString.two);
+            {
+                ((parent == nullptr) ?  _tokens : parent->_children).emplace_back(TokenType::String, isString.two);
+            }
             else
-                _tokens.emplace_back(TokenType::None, _code[i]);
+            {
+                ((parent == nullptr) ?  _tokens : parent->_children).emplace_back(TokenType::None, _code[i]);
+            }
         } else {
-            _tokens.emplace_back(tokenizer._dictionary[_code[i]], _code[i]);
+            // TODO: 2 Layers Deep Creates Problems
+            if (tokenizer._dictionary[_code[i]] == TokenType::OpenBlock) {
+                parent = &_tokens.back();
+            } else if (tokenizer._dictionary[_code[i]] == TokenType::CloseBlock) {
+                parent = parent->_parent;
+            }
+            ((parent == nullptr) ? _tokens : parent->_children).emplace_back(tokenizer._dictionary[_code[i]], _code[i]);
         }
     }
     contextPass(_rules);
 }
-
-
+Module::Module(const std::string &string, Tokenizer& tokenizer) {
+    _code = splitString(string);
+    *this = Module(_code, tokenizer);
+}
 
 Module::Module(const std::filesystem::path &path, Tokenizer& tokenizer) {
     _code = splitString(fileToString(path.string()));
-    for (int i = 0; i < _code.size(); i++) {
-        if (!tokenizer._dictionary.contains(_code[i])) {
-            if (auto isNum = Parser::isDigit(_code[i]); isNum)
-                _tokens.emplace_back(TokenType::Integer, _code[i]);
-            else if (auto isString = Parser::isString(_code[i]); isString.one)
-                _tokens.emplace_back(TokenType::String, isString.two);
-            else
-                _tokens.emplace_back(TokenType::None, _code[i]);
-        } else {
-            _tokens.emplace_back(tokenizer._dictionary[_code[i]], _code[i]);
-        }
-    }
-    contextPass(_rules);
+    *this = Module(_code, tokenizer);
 }
