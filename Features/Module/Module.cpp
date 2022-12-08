@@ -101,24 +101,40 @@ Module::Module(const std::vector<std::string> &string, Tokenizer &tokenizer) {
         if (!tokenizer._dictionary.contains(_code[i])) {
             if (auto isNum = Parser::isDigit(_code[i]); isNum)
             {
-                ((parent == nullptr) ?  _tokens : parent->_children).emplace_back(TokenType::Integer, _code[i]);
+                Token newTok(TokenType::Integer, _code[i]);
+                newTok._parent = parent;
+                ((parent == nullptr) ?  _tokens : parent->_children).push_back(newTok);
             }
             else if (auto isString = Parser::isString(_code[i]); isString.one)
             {
-                ((parent == nullptr) ?  _tokens : parent->_children).emplace_back(TokenType::String, isString.two);
+                Token newTok(TokenType::String, isString.two);
+                newTok._parent = parent;
+                ((parent == nullptr) ?  _tokens : parent->_children).push_back(newTok);
             }
             else
             {
-                ((parent == nullptr) ?  _tokens : parent->_children).emplace_back(TokenType::None, _code[i]);
+                Token newTok(TokenType::None, _code[i]);
+                newTok._parent = parent;
+                ((parent == nullptr) ?  _tokens : parent->_children).push_back(newTok);
             }
         } else {
             // TODO: 2 Layers Deep Creates Problems
             if (tokenizer._dictionary[_code[i]] == TokenType::OpenBlock) {
-                parent = &_tokens.back();
-            } else if (tokenizer._dictionary[_code[i]] == TokenType::CloseBlock) {
-                parent = parent->_parent;
+                Token newTok(TokenType::OpenBlock, "{");
+                parent = &newTok;
+                _tokens.push_back(newTok);
+                continue;
             }
-            ((parent == nullptr) ? _tokens : parent->_children).emplace_back(tokenizer._dictionary[_code[i]], _code[i]);
+            else if (tokenizer._dictionary[_code[i]] == TokenType::CloseBlock) {
+                Token newTok(TokenType::CloseBlock, "}");
+                _tokens.push_back(newTok);
+                parent = newTok._parent;
+                continue;
+            }
+
+            Token newTok(tokenizer._dictionary[_code[i]], _code[i]);
+            newTok._parent = parent;
+            ((parent == nullptr) ? _tokens : parent->_children).push_back(newTok);
         }
     }
     contextPass(_rules);

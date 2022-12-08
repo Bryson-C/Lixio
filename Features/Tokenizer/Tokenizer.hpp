@@ -33,6 +33,9 @@ public:
             std::cout << "\t" << i.asString() << "\n";
             for (auto& j : i._children) {
                 std::cout << "\t\t" << j.asString() << "\n";
+                if (!j._children.empty()) {
+                    std::cout << "\t\t\t...\n";
+                }
             }
         }
     }
