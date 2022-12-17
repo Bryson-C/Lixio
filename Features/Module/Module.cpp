@@ -98,45 +98,23 @@ Module::Module(const std::vector<std::string> &string, Tokenizer &tokenizer) {
     _code = string;
     Token* parent = nullptr;
     for (int i = 0; i < _code.size(); i++) {
-        if (!tokenizer._dictionary.contains(_code[i])) {
-            if (auto isNum = Parser::isDigit(_code[i]); isNum)
-            {
-                Token newTok(TokenType::Integer, _code[i]);
-                newTok._parent = parent;
-                ((parent == nullptr) ?  _tokens : parent->_children).push_back(newTok);
-            }
-            else if (auto isString = Parser::isString(_code[i]); isString.one)
-            {
-                Token newTok(TokenType::String, isString.two);
-                newTok._parent = parent;
-                ((parent == nullptr) ?  _tokens : parent->_children).push_back(newTok);
-            }
-            else
-            {
-                Token newTok(TokenType::None, _code[i]);
-                newTok._parent = parent;
-                ((parent == nullptr) ?  _tokens : parent->_children).push_back(newTok);
-            }
-        } else {
-            // TODO: 2 Layers Deep Creates Problems
-            if (tokenizer._dictionary[_code[i]] == TokenType::OpenBlock) {
-                Token newTok(TokenType::OpenBlock, "{");
-                parent = &newTok;
-                _tokens.push_back(newTok);
-                continue;
-            }
-            else if (tokenizer._dictionary[_code[i]] == TokenType::CloseBlock) {
-                Token newTok(TokenType::CloseBlock, "}");
-                _tokens.push_back(newTok);
-                parent = newTok._parent;
-                continue;
-            }
+        Token token;
+        token._type = TokenType::None;
+        token._str = _code[i];
+        token._parent = parent;
 
-            Token newTok(tokenizer._dictionary[_code[i]], _code[i]);
-            newTok._parent = parent;
-            ((parent == nullptr) ? _tokens : parent->_children).push_back(newTok);
+        if (tokenizer._dictionary[_code[i]] == TokenType::CloseBlock) {
+            if (parent != nullptr)
+                parent = parent->_parent;
         }
+        ((parent != nullptr) ? (*parent)._children : _tokens).push_back(token);
+        if (tokenizer._dictionary[_code[i]] == TokenType::OpenBlock) {
+            parent = (parent == nullptr) ? &_tokens.back() : &parent->_children.back();
+            continue;
+        }
+
     }
+
     contextPass(_rules);
 }
 Module::Module(const std::string &string, Tokenizer& tokenizer) {

@@ -28,7 +28,7 @@ public:
 
     inline std::string asString() const { return ((!_str.empty()) ? "\'" + _str + "\'" : "") + "  --  [" + tokenToString(_type) + "]"; }
     inline void print() const {
-        std::cout << asString() << "\n";
+        std::cout << asString() << ((!_children.empty()) ? "[" + std::to_string(_children.size()) + "]" : "") <<  "\n";
         for (auto& i : _children) {
             std::cout << "\t" << i.asString() << "\n";
             for (auto& j : i._children) {
